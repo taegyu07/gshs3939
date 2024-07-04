@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Teachable Machine Pose Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+</head>
+<body>
+    <div>Teachable Machine Pose Model</div>
+    <button type="button" onclick="init()">시작</button>
+    <div><canvas id="canvas"></canvas></div>
+    <div id="label-container"></div>
+    <div id="message-container"></div> <!-- 메시지를 띄울 컨테이너 -->
+    <audio id="alarm-sound" src="/mnt/data/기상나팔소리.mp3"></audio> <!-- 알람 소리 파일 경로 설정 -->
+    <audio id="audio-구부정한-자세" src="/mnt/data/구부정한 자세.mp3"></audio> <!-- 구부정한 자세 음원 파일 경로 설정 -->
+    <audio id="audio-엉덩이-빼기" src="/mnt/data/엉덩이 빼기.mp3"></audio> <!-- 엉덩이 빼기 음원 파일 경로 설정 -->
+    <audio id="audio-목피기" src="/mnt/data/목피기.mp3"></audio> <!-- 목피기 음원 파일 경로 설정 -->
+    <audio id="audio-잠" src="/mnt/data/기상나팔소리.mp3"></audio> <!-- 잠 음원 파일 경로 설정 -->
+    <script type="text/javascript">
+        const URL = "./my_model/";
+        let model, webcam, ctx, labelContainer, maxPredictions;
+
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmPose.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const size = 200;
+            const flip = true; // 웹캠 이미지 좌우 반전
+            webcam = new tmPose.Webcam(size, size, flip);
+            await webcam.setup(); // 웹캠 초기 설정
+            await webcam.play(); // 웹캠 재생
+            window.requestAnimationFrame(loop); // 루프 시작
+
+            const canvas = document.getElementById("canvas");
+            canvas.width = size; 
+            canvas.height = size;
+            ctx = canvas.getContext("2d");
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        async function loop(timestamp) {
+            webcam.update(); // 웹캠 업데이트
+            await predict(); // 예측 실행
+            window.requestAnimationFrame(loop); // 다음 프레임 요청
+        }
+
+        async function predict() {
+            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+            const prediction = await model.predict(posenetOutput);
+
+            for (let i = 0; i < maxPredictions; i++) {
+                const classPrediction = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                labelContainer.childNodes[i].innerHTML = classPrediction;
+
+                if (prediction[i].className === "굿" && prediction[i].probability > 0.8) {
+                    showMessage("잘하고 있어요.");
+                }
+                if (prediction[i].className === "자세교정(허리 구부정)" && prediction[i].probability > 0.8) {
+                    playAudio("audio-구부정한-자세");
+                }
+                if (prediction[i].className === "자세교정(엉빼)" && prediction[i].probability > 0.8) {
+                    playAudio("audio-엉덩이-빼기");
+                }
+                if (prediction[i].className === "자세교정(목 피기)" && prediction[i].probability > 0.8) {
+                    playAudio("audio-목피기");
+                }
+                if (prediction[i].className === "잠" && prediction[i].probability > 0.8) {
+                    playAudio("audio-잠");
+                }
+            }
+
+            drawPose(pose);
+        }
+
+        function drawPose(pose) {
+            if (webcam.canvas) {
+                ctx.drawImage(webcam.canvas, 0, 0);
+                if (pose) {
+                    const minPartConfidence = 0.5;
+                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+                }
+            }
+        }
+
+        function showMessage(message) {
+            const messageContainer = document.getElementById("message-container");
+            messageContainer.innerHTML = message;
+        }
+
+        function playAudio(audioId) {
+            const audioElement = document.getElementById(audioId);
+            audioElement.play();
+        }
+    </script>
+</body>
+</html>
