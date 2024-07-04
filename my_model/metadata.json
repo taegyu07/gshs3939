@@ -1,0 +1,1 @@
+{"tfjsVersion":"1.3.1","tmVersion":"0.8.6","packageVersion":"0.8.6","packageName":"@teachablemachine/pose","timeStamp":"2024-06-03T01:35:43.144Z","userMetadata":{},"modelName":"my-pose-model","labels":["굿","자세교정(허리 구부정)","자세교정(엉빼)","자세교정(목 피기)","잠"],"modelSettings":{"posenet":{"architecture":"MobileNetV1","outputStride":16,"inputResolution":257,"multiplier":0.75}}}
