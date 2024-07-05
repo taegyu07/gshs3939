@@ -12,11 +12,11 @@
     <div><canvas id="canvas"></canvas></div>
     <div id="label-container"></div>
     <div id="message-container"></div> <!-- 메시지를 띄울 컨테이너 -->
-    <audio id="alarm-sound" src="/mnt/data/기상나팔소리.mp3"></audio> <!-- 알람 소리 파일 경로 설정 -->
-    <audio id="audio-구부정한-자세" src="/mnt/data/구부정한 자세.mp3"></audio> <!-- 구부정한 자세 음원 파일 경로 설정 -->
-    <audio id="audio-엉덩이-빼기" src="/mnt/data/엉덩이 빼기.mp3"></audio> <!-- 엉덩이 빼기 음원 파일 경로 설정 -->
-    <audio id="audio-목피기" src="/mnt/data/목피기.mp3"></audio> <!-- 목피기 음원 파일 경로 설정 -->
-    <audio id="audio-잠" src="/mnt/data/기상나팔소리.mp3"></audio> <!-- 잠 음원 파일 경로 설정 -->
+    <audio id="alarm-sound" src="assets/기상나팔소리.mp3"></audio> <!-- 알람 소리 파일 경로 설정 -->
+    <audio id="audio-구부정한-자세" src="assets/구부정한 자세.mp3"></audio> <!-- 구부정한 자세 음원 파일 경로 설정 -->
+    <audio id="audio-엉덩이-빼기" src="assets/엉덩이 빼기.mp3"></audio> <!-- 엉덩이 빼기 음원 파일 경로 설정 -->
+    <audio id="audio-목피기" src="assets/목피기.mp3"></audio> <!-- 목피기 음원 파일 경로 설정 -->
+    <audio id="audio-잠" src="assets/기상나팔소리.mp3"></audio> <!-- 잠 음원 파일 경로 설정 -->
     <script type="text/javascript">
         const URL = "./my_model/";
         let model, webcam, ctx, labelContainer, maxPredictions;
@@ -25,23 +25,28 @@
             const modelURL = URL + "model.json";
             const metadataURL = URL + "metadata.json";
 
-            model = await tmPose.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+            try {
+                model = await tmPose.load(modelURL, metadataURL);
+                maxPredictions = model.getTotalClasses();
 
-            const size = 200;
-            const flip = true; // 웹캠 이미지 좌우 반전
-            webcam = new tmPose.Webcam(size, size, flip);
-            await webcam.setup(); // 웹캠 초기 설정
-            await webcam.play(); // 웹캠 재생
-            window.requestAnimationFrame(loop); // 루프 시작
+                const size = 200;
+                const flip = true; // 웹캠 이미지 좌우 반전
+                webcam = new tmPose.Webcam(size, size, flip);
+                await webcam.setup(); // 웹캠 초기 설정
+                await webcam.play(); // 웹캠 재생
+                window.requestAnimationFrame(loop); // 루프 시작
 
-            const canvas = document.getElementById("canvas");
-            canvas.width = size; 
-            canvas.height = size;
-            ctx = canvas.getContext("2d");
-            labelContainer = document.getElementById("label-container");
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
+                const canvas = document.getElementById("canvas");
+                canvas.width = size; 
+                canvas.height = size;
+                ctx = canvas.getContext("2d");
+                labelContainer = document.getElementById("label-container");
+                for (let i = 0; i < maxPredictions; i++) {
+                    labelContainer.appendChild(document.createElement("div"));
+                }
+            } catch (error) {
+                console.error("Initialization failed: ", error);
+                alert("모델을 불러오지 못했습니다. 모델 파일 경로와 네트워크 상태를 확인하세요.");
             }
         }
 
